@@ -1,0 +1,31 @@
+{
+  "profiles": [
+    "Backend Developer",
+    "Full Stack Developer",
+    "Data Analyst / BI Developer",
+    "Data Scientist",
+    "Cloud Architect",
+    "DevOps Engineer",
+    "AI / ML Engineer",
+    "Software Architect",
+    "Software Engineer",
+    "System Analyst",
+    "Team Lead / Developer",
+    "ERP / CRM Developer",
+    "Embedded / Real-Time Engineer",
+    "QA / Manual Engineer",
+    "QA / Automation Engineer",
+    "QA Engineer",
+    "General Hi-Tech Profile",
+    "Frontend Developer",
+    "Cyber Security Specialist",
+    "Not a Tech Profile"
+  ],
+  "level_hierarchy": {
+    "ללא נסיון": ["ללא נסיון", "1-2 שנים"],
+    "1-2 שנים": ["1-2 שנים", "3-4 שנים"],
+    "3-4 שנים": ["3-4 שנים", "5-6 שנים"],
+    "5-6 שנים": ["5-6 שנים", "3-4 שנים", "7 שנים ומעלה"],
+    "7 שנים ומעלה": ["7 שנים ומעלה", "5-6 שנים"]
+  }
+}
