@@ -6,7 +6,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from apscheduler.schedulers.background import BackgroundScheduler
 from dotenv import load_dotenv
 
-# טעינת משתני סביבה (חובה בהתחלה)
 load_dotenv()
 
 from runUpdate import run_full_update
@@ -27,7 +26,7 @@ app = FastAPI(title="Personal Job Market Analyzer API")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost"],
+    allow_origin_regex=r"https://.*\.vercel\.app|http://localhost:\d+",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -50,5 +49,4 @@ if __name__ == "__main__":
     threading.Thread(target=start_scheduler, daemon=True).start()
     threading.Thread(target=run_full_update, daemon=True).start()
 
-    # שינוי חשוב: 0.0.0.0 מאפשר גישה מבחוץ (חובה לענן)
     uvicorn.run(app, host="0.0.0.0", port=8000, log_level="info")
