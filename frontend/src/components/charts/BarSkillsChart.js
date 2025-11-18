@@ -26,7 +26,7 @@ export default function BarSkillsChart({ data }) {
           <BarChart 
             data={data} 
             layout={isMobile ? "vertical" : "horizontal"}
-            margin={{ top: 20, right: 30, left: isMobile ? 0 : 20, bottom: 20 }}
+            margin={{ top: 20, right: 30, left: isMobile ? 40: 20, bottom: 20 }}
           >
             <CartesianGrid strokeDasharray="3 3" vertical={!isMobile} horizontal={isMobile} />
             
@@ -36,7 +36,7 @@ export default function BarSkillsChart({ data }) {
               domain={[0, 100]}
               ticks={isMobile ? [0, 25, 50, 75, 100] : undefined}
               tickFormatter={!isMobile ? undefined : (value) => `${value}%`}
-              tick={{ fontSize: 11, fill: '#666' }}
+              tick={{ fontSize: 11, fill: '#b2bbb4ff',dy: 5  }}
               interval={0}
             />
 
@@ -44,9 +44,9 @@ export default function BarSkillsChart({ data }) {
               type={isMobile ? "category" : "number"}
               dataKey={isMobile ? "name" : undefined}
               domain={[0, 100]}
-              width={isMobile ? 10 : 40} 
+              width={isMobile ? 40 : 40} 
               tickFormatter={isMobile ? (val) => val.length > 18 ? val.slice(0, 18) + '..' : val : (val) => `${val}%`}
-              tick={{ fontSize: 11, fill: '#333', textAnchor: 'end' }} 
+              tick={{ fontSize: 11, fill: '#b2bbb4ff', dx: -50 }} 
               interval={0}
             />
 
