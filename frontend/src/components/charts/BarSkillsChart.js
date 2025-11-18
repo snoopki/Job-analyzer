@@ -21,12 +21,13 @@ export default function BarSkillsChart({ data }) {
     <Paper shadow="sm" p="md" withBorder radius="md" mb="xl" style={{ minWidth: 0 }}>
       <Title order={4} mb="md">📊 כישורים מבוקשים לפי אחוזים</Title>
       
-      <Box style={{ width: '100%', height: isMobile ? 500 : 400, minWidth: 0 }}>
+      <Box style={{ width: '100%', height: isMobile ? Math.max(450, data.length * 55) : 420, minWidth: 0 }}>
         <ResponsiveContainer width="100%" height="100%">
           <BarChart 
             data={data} 
             layout={isMobile ? "vertical" : "horizontal"}
-            margin={{ top: 20, right: 30, left: isMobile ? 40: 20, bottom: 20 }}
+            margin={{ top: 20, right: 30, left: isMobile ? 40: 20, bottom: isMobile ? 80 : 20 }}
+
           >
             <CartesianGrid strokeDasharray="3 3" vertical={!isMobile} horizontal={isMobile} />
             
@@ -38,6 +39,8 @@ export default function BarSkillsChart({ data }) {
               tickFormatter={!isMobile ? undefined : (value) => `${value}%`}
               tick={{ fontSize: 11, fill: '#b2bbb4ff',dy: 5  }}
               interval={0}
+              minTickGap={15}
+
             />
 
             <YAxis

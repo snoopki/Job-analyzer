@@ -18,7 +18,7 @@ export default function ExperiencePieChart({ data }) {
       <Title order={4} mb="md">🍰 התפלגות ניסיון נדרש</Title>
       <Box style={{ width: '100%', height: 300 }}>
         <ResponsiveContainer width="100%" height="100%">
-          <PieChart margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
+          <PieChart margin={{ top: 10, right: 10, left: 10, bottom: 10 }}>
             <Tooltip 
               formatter={(v, n, e) => [`${v} משרות`, e?.payload?.name]}
               contentStyle={{ direction: 'rtl', textAlign: 'right', borderRadius: '8px' }}
@@ -30,7 +30,7 @@ export default function ExperiencePieChart({ data }) {
               nameKey="name"
               cx="50%"
               cy="50%"
-              outerRadius="70%" 
+              outerRadius="65%%" 
               labelLine={false}
               label={renderPercentLabel}
             >

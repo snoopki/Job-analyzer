@@ -12,7 +12,7 @@ function AnalyzePage() {
   };
 
   return (
-    <Container size="md" px="md" py="xl" style={{ direction: 'rtl', textAlign: 'right', minHeight: '80vh', position: 'relative', overflow: 'hidden' }}>
+    <Container size="md" px="md" py="xl" style={{ direction: 'rtl', textAlign: 'right', minHeight: '80vh', position: 'relative', overflow: 'visible' }}>
       
       <LoadingOverlay
         visible={isLoading}
