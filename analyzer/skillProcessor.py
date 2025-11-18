@@ -122,10 +122,8 @@ def run_skill_processor():
     save_success = dbQueries.save_processed_skills(results_dict)
 
     elapsed = time.time() - start_time
-    logging.info("-" * 50)
     if save_success:
         logging.info(f"Skill processing finished successfully! Total time: {elapsed:.2f} seconds")
     else:
         logging.warning(f"Save failed - check logs. Total time: {elapsed:.2f} seconds")
     logging.info(f"Successfully processed {len(results_dict)} jobs.")
-    logging.info("-" * 50)

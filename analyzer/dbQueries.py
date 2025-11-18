@@ -1,4 +1,5 @@
-import sqlite3
+import psycopg2
+from psycopg2.extras import RealDictCursor
 import logging
 from .dbCore import get_db_connection, get_or_create_id
 from functools import lru_cache
@@ -21,7 +22,7 @@ def get_jobs_to_process():
             cursor.execute("SELECT job_id, description FROM jobs")
             jobs = cursor.fetchall()
             logger.info(f"DB Queries: Found {len(jobs)} jobs to process for skills.")
-    except sqlite3.Error as e:
+    except psycopg2.Error as e:
         logger.error(f"DB Queries: Error fetching jobs to process: {e}", exc_info=True)
     return jobs
 
@@ -60,7 +61,12 @@ def save_processed_skills(processed_results: dict):
 
             if all_job_skills_to_insert:
                 logger.info(f"DB Queries: Inserting {len(all_job_skills_to_insert)} skill links into job_skills table...")
-                cursor.executemany("INSERT OR IGNORE INTO job_skills (job_id, skill_id) VALUES (?, ?)", all_job_skills_to_insert)
+                # Postgres equivalent for INSERT OR IGNORE -> ON CONFLICT DO NOTHING
+                cursor.executemany("""
+                    INSERT INTO job_skills (job_id, skill_id) 
+                    VALUES (%s, %s) 
+                    ON CONFLICT DO NOTHING
+                """, all_job_skills_to_insert)
             
             conn.commit()
             logger.info("DB Queries: Saving processed skills complete!")
@@ -83,7 +89,7 @@ def get_popular_skills(top_n=20):
         JOIN job_skills AS js ON s.skill_id = js.skill_id
         GROUP BY s.skill_name
         ORDER BY job_count DESC
-        LIMIT ?
+        LIMIT %s
     """
     
     results = []
@@ -96,7 +102,7 @@ def get_popular_skills(top_n=20):
             cursor.execute(query, (top_n,))
             results = cursor.fetchall()
             logger.info(f"DB Queries: Fetched {len(results)} popular skills (from DB, not cache).")
-    except sqlite3.Error as e:
+    except psycopg2.Error as e:
         logger.error(f"DB Queries: Error fetching popular skills: {e}", exc_info=True)
     
     return results
@@ -123,15 +129,16 @@ def find_matching_jobs(
                 logger.warning("DB Queries: find_matching_jobs received an empty skill list.")
                 return [] 
             
-            skill_placeholders = ','.join(['?'] * len(user_skills_list))
-            cursor.execute(f"SELECT skill_id FROM skills WHERE skill_name IN ({skill_placeholders})", user_skills_list)
+            # שימוש ב-%s לפרמטרים
+            skill_placeholders = ','.join(['%s'] * len(user_skills_list))
+            cursor.execute(f"SELECT skill_id FROM skills WHERE skill_name IN ({skill_placeholders})", tuple(user_skills_list))
             user_skill_ids = [row[0] for row in cursor.fetchall()]
             if not user_skill_ids: 
                 logger.warning(f"DB Queries: User skills {user_skills_list} not found in DB.")
                 return []
 
-            level_placeholders = ','.join(['?'] * len(target_level_names))
-            cursor.execute(f"SELECT level_id, level_name FROM experience_levels WHERE level_name IN ({level_placeholders})", target_level_names)
+            level_placeholders = ','.join(['%s'] * len(target_level_names))
+            cursor.execute(f"SELECT level_id, level_name FROM experience_levels WHERE level_name IN ({level_placeholders})", tuple(target_level_names))
             level_map = {name: id for id, name in cursor.fetchall()}
             
             target_level_ids = list(level_map.values())
@@ -145,8 +152,8 @@ def find_matching_jobs(
                     logger.error(f"DB Queries: Error! Primary level '{primary_level_name}' not found in DB.")
                     return []
 
-            skill_id_placeholders = ','.join(['?'] * len(user_skill_ids))
-            level_id_placeholders = ','.join(['?'] * len(target_level_ids))
+            skill_id_placeholders = ','.join(['%s'] * len(user_skill_ids))
+            level_id_placeholders = ','.join(['%s'] * len(target_level_ids))
 
             query = f"""
             WITH JobMatchStats AS (
@@ -163,7 +170,7 @@ def find_matching_jobs(
                 SELECT
                     jms.job_id, jms.title, jms.link, el.level_name, c.company_name,
                     CASE 
-                        WHEN jms.level_id = ? THEN (CAST(jms.user_matched_skills AS REAL) / jms.total_skills_required)
+                        WHEN jms.level_id = %s THEN (CAST(jms.user_matched_skills AS REAL) / jms.total_skills_required)
                         ELSE (CAST(jms.user_matched_skills AS REAL) / jms.total_skills_required) - 0.25 
                     END AS match_percentage
                 FROM JobMatchStats AS jms
@@ -173,15 +180,16 @@ def find_matching_jobs(
             SELECT 
                 jps.job_id, jps.title, jps.link, jps.level_name, jps.match_percentage, jps.company_name
             FROM JobPenalizedStats AS jps
-            WHERE jps.match_percentage >= ?
+            WHERE jps.match_percentage >= %s
             ORDER BY
                 jps.match_percentage DESC
-            LIMIT ?;
+            LIMIT %s;
             """
 
-            params = user_skill_ids + target_level_ids + [primary_level_id] + [threshold, limit]
+            # שרשור כל הפרמטרים לרשימה אחת שטוחה
+            params = user_skill_ids + target_level_ids + [primary_level_id, threshold, limit]
             
-            cursor.execute(query, params)
+            cursor.execute(query, tuple(params))
             rows = cursor.fetchall()
 
             results = []
@@ -197,7 +205,7 @@ def find_matching_jobs(
             logger.info(f"DB Queries: Found {len(results)} matching jobs.")
             return results
 
-    except sqlite3.Error as e:
+    except psycopg2.Error as e:
         logger.error(f"DB Queries: Critical error in find_matching_jobs: {e}", exc_info=True)
         return []
 
@@ -221,12 +229,13 @@ def get_experience_level_distribution():
             if conn is None: 
                 logger.error("DB Queries: Could not get DB connection in get_experience_level_distribution.")
                 return []
-            conn.row_factory = sqlite3.Row 
-            cursor = conn.cursor()
+            
+            # שימוש ב-RealDictCursor כדי לקבל מילון
+            cursor = conn.cursor(cursor_factory=RealDictCursor)
             cursor.execute(query)
             results = [dict(row) for row in cursor.fetchall()] 
             logger.debug(f"DB Queries: Fetched experience level distribution: {results}")
-    except sqlite3.Error as e:
+    except psycopg2.Error as e:
         logger.error(f"DB Queries: Error fetching level distribution: {e}", exc_info=True)
     
     return results
@@ -248,7 +257,7 @@ def get_skill_popularity_percentages(top_n=20):
         CROSS JOIN total_jobs AS tj
         GROUP BY s.skill_name, tj.total_count
         ORDER BY job_count DESC
-        LIMIT ?;
+        LIMIT %s;
     """
 
     try:
@@ -261,7 +270,7 @@ def get_skill_popularity_percentages(top_n=20):
             results = cursor.fetchall()
             logger.debug(f"DB Queries: Fetched {len(results)} skills with percentages: {results}")
             return results
-    except sqlite3.Error as e:
+    except psycopg2.Error as e:
         logger.error(f"DB Queries: Error fetching skills with percentages: {e}", exc_info=True)
         return []
 
@@ -269,7 +278,7 @@ def get_skill_popularity_percentages(top_n=20):
 def get_popular_skills_for_profile(profile_name: str, top_n: int = 20):
     """
     Fetches the most popular skills for a specific profile.
-    Tries 3 methods: by profile column, by title LIKE, by keywords.
+    Tries 2 methods: by title LIKE, by keywords.
     """
     if not profile_name:
         return []
@@ -281,58 +290,55 @@ def get_popular_skills_for_profile(profile_name: str, top_n: int = 20):
                 return []
             cursor = conn.cursor()
             
+            # --- התיקון החשוב: מחקנו את החיפוש לפי profile_name ---
+
+            # ניסיון 1: לפי כותרת המשרה (LIKE)
             try:
                 cursor.execute("""
                     SELECT s.skill_name, COUNT(js.job_id) AS job_count
                     FROM skills s
                     JOIN job_skills js ON s.skill_id = js.skill_id
                     JOIN jobs j ON js.job_id = j.job_id
-                    WHERE LOWER(j.profile_name) = LOWER(?)
+                    WHERE LOWER(j.title) LIKE LOWER(%s)
                     GROUP BY s.skill_name
                     ORDER BY job_count DESC
-                    LIMIT ?
-                """, (profile_name, top_n))
+                    LIMIT %s
+                """, (f"%{profile_name}%", top_n))
                 rows = cursor.fetchall()
                 if rows:
-                    logger.info(f"DB Queries: Found {len(rows)} skills for profile '{profile_name}' (by column).")
+                    logger.info(f"DB Queries: Found {len(rows)} skills for profile '{profile_name}' (by title LIKE).")
                     return [r[0] for r in rows]
-            except sqlite3.Error:
-                pass
+            except psycopg2.Error as e:
+                # אם נכשל - חייבים לעשות rollback כדי לא לתקוע את החיבור
+                logger.warning(f"Query failed inside get_popular_skills_for_profile (method 1): {e}")
+                conn.rollback()
 
-            cursor.execute("""
-                SELECT s.skill_name, COUNT(js.job_id) AS job_count
-                FROM skills s
-                JOIN job_skills js ON s.skill_id = js.skill_id
-                JOIN jobs j ON js.job_id = j.job_id
-                WHERE LOWER(j.title) LIKE LOWER(?)
-                GROUP BY s.skill_name
-                ORDER BY job_count DESC
-                LIMIT ?
-            """, (f"%{profile_name}%", top_n))
-            rows = cursor.fetchall()
-            if rows:
-                logger.info(f"DB Queries: Found {len(rows)} skills for profile '{profile_name}' (by title LIKE).")
-                return [r[0] for r in rows]
+            # ניסיון 2: לפי מילות מפתח
+            try:
+                keywords = profile_name.lower().split()
+                placeholders = " OR ".join(["LOWER(j.title) LIKE %s"] * len(keywords))
+                params = [f"%{kw}%" for kw in keywords] + [top_n]
+                
+                cursor.execute(f"""
+                    SELECT s.skill_name, COUNT(js.job_id) AS job_count
+                    FROM skills s
+                    JOIN job_skills js ON s.skill_id = js.skill_id
+                    JOIN jobs j ON js.job_id = j.job_id
+                    WHERE {placeholders}
+                    GROUP BY s.skill_name
+                    ORDER BY job_count DESC
+                    LIMIT %s
+                """, tuple(params))
+                rows = cursor.fetchall()
+                if rows:
+                    logger.info(f"DB Queries: Found {len(rows)} skills for profile '{profile_name}' (by keywords).")
+                    return [r[0] for r in rows]
+            except psycopg2.Error as e:
+                # רול-בק
+                logger.warning(f"Query failed inside get_popular_skills_for_profile (method 2): {e}")
+                conn.rollback()
 
-            keywords = profile_name.lower().split()
-            placeholders = " OR ".join(["LOWER(j.title) LIKE ?"] * len(keywords))
-            params = [f"%{kw}%" for kw in keywords] + [top_n]
-            cursor.execute(f"""
-                SELECT s.skill_name, COUNT(js.job_id) AS job_count
-                FROM skills s
-                JOIN job_skills js ON s.skill_id = js.skill_id
-                JOIN jobs j ON js.job_id = j.job_id
-                WHERE {placeholders}
-                GROUP BY s.skill_name
-                ORDER BY job_count DESC
-                LIMIT ?
-            """, params)
-            rows = cursor.fetchall()
-            if rows:
-                logger.info(f"DB Queries: Found {len(rows)} skills for profile '{profile_name}' (by keywords).")
-                return [r[0] for r in rows]
-
-    except sqlite3.Error as e:
+    except psycopg2.Error as e:
         logger.error(f"DB Queries: Error fetching skills by profile ({profile_name}): {e}", exc_info=True)
 
     logger.warning(f"DB Queries: No skills found at all for profile '{profile_name}'.")

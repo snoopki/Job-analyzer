@@ -4,10 +4,14 @@ import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from apscheduler.schedulers.background import BackgroundScheduler
+from dotenv import load_dotenv
+
+# טעינת משתני סביבה (חובה בהתחלה)
+load_dotenv()
+
 from runUpdate import run_full_update
 from api.routes.dashboard import router as dashboard_router
 from api.routes.analysis import router as analysis_router
-
 
 logging.basicConfig(
     level=logging.INFO,
@@ -46,4 +50,5 @@ if __name__ == "__main__":
     threading.Thread(target=start_scheduler, daemon=True).start()
     threading.Thread(target=run_full_update, daemon=True).start()
 
-    uvicorn.run(app, host="127.0.0.1", port=8000, log_level="info")
+    # שינוי חשוב: 0.0.0.0 מאפשר גישה מבחוץ (חובה לענן)
+    uvicorn.run(app, host="0.0.0.0", port=8000, log_level="info")

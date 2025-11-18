@@ -65,16 +65,7 @@ def analyze_cv(cv_text: str):
         canonical_skills = list(skill_keywords_dict.keys())
         
         level_hierarchy_config = dbQueries.get_level_hierarchy()
-        if not level_hierarchy_config:
-            logger.error("Service: Failed to load level hierarchy config. Using fallback.")
-            level_hierarchy_config = {
-                'ללא נסיון': ['ללא נסיון', '1-2 שנים'],
-                '1-2 שנים': ['1-2 שנים', '3-4 שנים'],
-                '3-4 שנים': ['3-4 שנים', '5-6 שנים'],
-                '5-6 שנים': ['5-6 שנים', '3-4 שנים', '7 שנים ומעלה'],
-                '7 שנים ומעלה': ['7 שנים ומעלה','5-6 שנים']
-            }
-        
+
         canonical_levels = list(level_hierarchy_config.keys())
 
         logger.info("Service: Running dynamic profile detection (heuristic)...")

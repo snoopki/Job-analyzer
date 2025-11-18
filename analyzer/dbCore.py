@@ -1,17 +1,19 @@
-import sqlite3
+import psycopg2
 import logging
-from config import DB_FILE_PATH
+import os
+from dotenv import load_dotenv
+load_dotenv()
 
 logger = logging.getLogger(__name__)
 
+DATABASE_URL = os.environ.get('DATABASE_URL')
 
 def get_db_connection():
-    """Return a SQLite connection with foreign keys enabled."""
+    """Return a PostgreSQL connection."""
     try:
-        conn = sqlite3.connect(DB_FILE_PATH)
-        conn.execute("PRAGMA foreign_keys = ON;")
+        conn = psycopg2.connect(DATABASE_URL)
         return conn
-    except sqlite3.Error as e:
+    except psycopg2.Error as e:
         logger.critical(f"Database connection failed: {e}")
         return None
 
@@ -32,7 +34,7 @@ def get_or_create_id(cursor, table, column_prefix, value, cache=None):
 
     try:
         cursor.execute(
-            f"SELECT {id_field} FROM {table} WHERE {name_field} = ?",
+            f"SELECT {id_field} FROM {table} WHERE {name_field} = %s",
             (value,)
         )
         result = cursor.fetchone()
@@ -41,16 +43,16 @@ def get_or_create_id(cursor, table, column_prefix, value, cache=None):
             entity_id = result[0]
         else:
             cursor.execute(
-                f"INSERT INTO {table} ({name_field}) VALUES (?)",
+                f"INSERT INTO {table} ({name_field}) VALUES (%s) RETURNING {id_field}",
                 (value,)
             )
-            entity_id = cursor.lastrowid
+            entity_id = cursor.fetchone()[0]
 
         if cache is not None:
             cache[value] = entity_id
 
         return entity_id
 
-    except sqlite3.Error as e:
+    except psycopg2.Error as e:
         logger.error(f"get_or_create_id failed for {table} value='{value}': {e}")
         return None

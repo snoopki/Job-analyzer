@@ -8,14 +8,23 @@ logger = logging.getLogger(__name__)
 
 
 def create_schema(cursor):
-    """ 
-    Creates the entire database schema if it doesn't already exist.
-    """
     logger.info("Verifying database schema...")
     
     cursor.execute("""
+    CREATE TABLE IF NOT EXISTS companies (
+        company_id SERIAL PRIMARY KEY, 
+        company_name TEXT NOT NULL UNIQUE
+    );""")
+    
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS experience_levels (
+        level_id SERIAL PRIMARY KEY, 
+        level_name TEXT NOT NULL UNIQUE
+    );""")
+
+    cursor.execute("""
     CREATE TABLE IF NOT EXISTS jobs (
-        job_id INTEGER PRIMARY KEY AUTOINCREMENT, 
+        job_id SERIAL PRIMARY KEY, 
         title TEXT, 
         description TEXT, 
         link TEXT, 
@@ -27,26 +36,14 @@ def create_schema(cursor):
     );""")
     
     cursor.execute("""
-    CREATE TABLE IF NOT EXISTS companies (
-        company_id INTEGER PRIMARY KEY AUTOINCREMENT, 
-        company_name TEXT NOT NULL UNIQUE
-    );""")
-    
-    cursor.execute("""
     CREATE TABLE IF NOT EXISTS locations (
-        location_id INTEGER PRIMARY KEY AUTOINCREMENT, 
+        location_id SERIAL PRIMARY KEY, 
         location_name TEXT NOT NULL UNIQUE
     );""")
     
     cursor.execute("""
-    CREATE TABLE IF NOT EXISTS experience_levels (
-        level_id INTEGER PRIMARY KEY AUTOINCREMENT, 
-        level_name TEXT NOT NULL UNIQUE
-    );""")
-    
-    cursor.execute("""
     CREATE TABLE IF NOT EXISTS skills (
-        skill_id INTEGER PRIMARY KEY AUTOINCREMENT, 
+        skill_id SERIAL PRIMARY KEY, 
         skill_name TEXT NOT NULL UNIQUE
     );""")
     
@@ -77,10 +74,6 @@ def create_schema(cursor):
 
 
 def load_raw_data_to_db():
-    """
-    Loads raw data from a JSONL file into the database.
-    Assumes the schema (tables) already exists.
-    """
     if not os.path.exists(JSONL_OUTPUT_FILE):
         logger.error(f"Error: {JSONL_OUTPUT_FILE} not found.")
         return False
@@ -101,12 +94,8 @@ def load_raw_data_to_db():
             
             cursor = conn.cursor()
             
-            logger.info("DB Loader: Clearing old data (jobs, job_skills, job_locations)...")
-            cursor.execute("DELETE FROM job_skills;")
-            cursor.execute("DELETE FROM job_locations;")
-            cursor.execute("DELETE FROM jobs;")
-            cursor.execute("DELETE FROM sqlite_sequence WHERE name IN ('jobs', 'job_skills', 'job_locations');")
-
+            logger.info("DB Loader: Clearing old data...")
+            cursor.execute("TRUNCATE TABLE jobs, job_skills, job_locations RESTART IDENTITY CASCADE;")
             
             logger.info(f"DB Loader: Starting raw data load from {JSONL_OUTPUT_FILE}...")
             
@@ -118,11 +107,12 @@ def load_raw_data_to_db():
 
                     cursor.execute("""
                     INSERT INTO jobs (title, description, link, company_id, level_id)
-                    VALUES (?, ?, ?, ?, ?)""", (
+                    VALUES (%s, %s, %s, %s, %s)
+                    RETURNING job_id""", (
                         job.get('title'), job.get('description'), job.get('link'),
                         company_id, level_id
                     ))
-                    job_id = cursor.lastrowid 
+                    job_id = cursor.fetchone()[0]
                     inserted_jobs_count += 1
 
                     locations_list = job.get('locations', [])
@@ -139,7 +129,11 @@ def load_raw_data_to_db():
                     logger.warning(f"JSON Decode Error: {line[:50]}...")
             
             if job_locations_to_insert:
-                cursor.executemany("INSERT OR IGNORE INTO job_locations (job_id, location_id) VALUES (?, ?)", job_locations_to_insert)
+                cursor.executemany("""
+                    INSERT INTO job_locations (job_id, location_id) 
+                    VALUES (%s, %s) 
+                    ON CONFLICT DO NOTHING
+                """, job_locations_to_insert)
             
             conn.commit()
             logger.info(f"DB Loader: Raw data load complete! Inserted {inserted_jobs_count} jobs.")

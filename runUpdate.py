@@ -2,6 +2,8 @@ import time
 import os
 import traceback
 import logging
+from dotenv import load_dotenv
+load_dotenv()
 from jobScraper.controller import run_scraper
 from analyzer.dbLoader import load_raw_data_to_db, create_schema
 from analyzer import skillProcessor
