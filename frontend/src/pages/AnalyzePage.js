@@ -1,30 +1,33 @@
-import { Container, LoadingOverlay } from '@mantine/core';
+import { Container, LoadingOverlay, Box } from '@mantine/core';
 import { useAnalyzeCV } from '../hooks/useAnalyzeCV';
 import Loader from '../components/Loader';
-import CVInputForm from '../components/CVInputForm'; 
-import AnalysisResults from '../components/AnalysisResults'; 
+import CVInputForm from '../components/CVInputForm';
+import AnalysisResults from '../components/AnalysisResults';
 
 function AnalyzePage() {
   const { results, isLoading, error, analyze } = useAnalyzeCV();
+
   const handleSubmit = (cvText) => {
     analyze(cvText);
   };
 
   return (
-    <Container size="md" style={{ direction: 'rtl', textAlign: 'right' }}>
+    <Container size="md" px="md" py="xl" style={{ direction: 'rtl', textAlign: 'right', minHeight: '80vh', position: 'relative', overflow: 'hidden' }}>
       
       <LoadingOverlay
         visible={isLoading}
         overlayProps={{ radius: 'sm', blur: 2 }}
-        loader={Loader}
-        loaderProps={{ size: 'lg', type: 'dots' }}
-        style={{ position: 'fixed', inset: 0, zIndex: 1000 }}
+        loaderProps={{ children: <Loader /> }}
+        zIndex={1000}
+        style={{ position: 'fixed', inset: 0 }}
       />
 
-      <CVInputForm 
-        isLoading={isLoading} 
-        onSubmit={handleSubmit} 
-      />
+      <Box mb={30}>
+        <CVInputForm
+          isLoading={isLoading}
+          onSubmit={handleSubmit}
+        />
+      </Box>
 
       {results && !isLoading && !error && (
         <AnalysisResults results={results} />

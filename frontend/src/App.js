@@ -6,7 +6,7 @@ import DashboardPage from './pages/DashboardPage';
 import Navbar from './components/Navbar';
 
 function App() {
-  const [opened, { toggle }] = useDisclosure();
+  const [opened, { toggle,close }] = useDisclosure();
 
   return (
     <AppShell
@@ -26,7 +26,7 @@ function App() {
       </AppShell.Header>
 
       <AppShell.Navbar p="md">
-        <Navbar />
+        <Navbar onClose={close} />
       </AppShell.Navbar>
       <AppShell.Main>
         <Routes>

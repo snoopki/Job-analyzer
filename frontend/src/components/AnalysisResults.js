@@ -5,7 +5,9 @@ import {
   SimpleGrid,
   List,
   Text,
-  Title as MantineTitle
+  Title as MantineTitle,
+  Stack,
+  ThemeIcon
 } from '@mantine/core';
 import ReactMarkdown from 'react-markdown'; 
 import JobCard from './JobCard';
@@ -15,15 +17,16 @@ const MarkdownRenderer = ({ text }) => {
   return (
     <ReactMarkdown
       components={{
-        p: ({ children }) => <Text component="p" mb="sm">{children}</Text>,
+        p: ({ children }) => <Text component="p" mb="sm" style={{ lineHeight: 1.6 }}>{children}</Text>,
         strong: ({ children }) => <Text span fw={700}>{children}</Text>,
+        ul: ({ children }) => <List spacing="xs" size="sm" center>{children}</List>,
+        li: ({ children }) => <List.Item>{children}</List.Item>,
       }}
     >
       {text || ''} 
     </ReactMarkdown>
   );
 };
-
 
 function AnalysisResults({ results }) {
   
@@ -33,45 +36,60 @@ function AnalysisResults({ results }) {
 
   return (
     <Box mt="xl">
-      <Paper shadow="sm" p="lg" withBorder mb="lg" style={{ direction: 'rtl' }}>
-        <MantineTitle order={3} c="blue.6" mb="sm">✨ ההמלצה של ה-AI</MantineTitle>     
-        <MarkdownRenderer text={recommendation.opening} />
-        <MarkdownRenderer text={recommendation.gap_analysis_intro} />
-        <MantineTitle order={4} mt="lg" mb="sm">
-          {recommendation.cv_review_title}
-        </MantineTitle>
-        <List withPadding>
-          {(recommendation.cv_review_points || []).map((point, i) => (
-            <List.Item key={i}>
-              <MarkdownRenderer text={point} />
-            </List.Item>
-          ))}
-        </List>
-        <MarkdownRenderer text={recommendation.closing} />
-      </Paper>
-      <Paper shadow="sm" p="lg" withBorder mb="lg" style={{ direction: 'rtl' }}>
-        <MantineTitle order={3} c="grape.6" mb="md">📊 ניתוח כישורים</MantineTitle>
-        <MantineTitle order={5} mb="sm">הכישורים שלך:</MantineTitle>
-        <Group mb="md" style={{ flexWrap: 'wrap', justifyContent: 'flex-start' }}>
-          {(details.cv_skills || []).map((skill) => (
-            <SkillTag key={skill} skillName={skill} color="green" />
-          ))}
-        </Group>
+      <Stack gap="lg">
+        <Paper shadow="sm" p={{ base: 'md', md: 'lg' }} withBorder style={{ direction: 'rtl' }}>
+          <MantineTitle order={3} c="blue.6" mb="md">✨ ההמלצה של ה-AI</MantineTitle>     
+          <MarkdownRenderer text={recommendation.opening} />
+          <MarkdownRenderer text={recommendation.gap_analysis_intro} />
+          
+          <MantineTitle order={4} mt="lg" mb="sm">
+            {recommendation.cv_review_title}
+          </MantineTitle>
+          
+          <List spacing="sm" size="sm" icon={
+            <ThemeIcon color="blue" size={20} radius="xl">
+              <Text size="xs">✓</Text>
+            </ThemeIcon>
+          }>
+            {(recommendation.cv_review_points || []).map((point, i) => (
+              <List.Item key={i}>
+                <MarkdownRenderer text={point} />
+              </List.Item>
+            ))}
+          </List>
+          
+          <Box mt="md">
+            <MarkdownRenderer text={recommendation.closing} />
+          </Box>
+        </Paper>
 
-        <MantineTitle order={5} mb="sm">פערים מול השוק:</MantineTitle>
-        <Group style={{ flexWrap: 'wrap', justifyContent: 'flex-start' }}>
-          {(details.market_gaps || []).map((skill) => (
-            <SkillTag key={skill} skillName={skill} color="orange" />
-          ))}
-        </Group>
-      </Paper>
-      <MantineTitle order={3} mb="md">🔥 משרות שיכולות להתאים עבורך</MantineTitle>
-      <SimpleGrid cols={{ base: 1, md: 2 }} spacing="lg">
-        {jobs.map((job, index) => (
-          <JobCard key={index} job={job} />
-        ))}
-      </SimpleGrid>
-      
+        <Paper shadow="sm" p={{ base: 'md', md: 'lg' }} withBorder style={{ direction: 'rtl' }}>
+          <MantineTitle order={3} c="grape.6" mb="md">📊 ניתוח כישורים</MantineTitle>
+          
+          <MantineTitle order={5} mb="xs">הכישורים שלך:</MantineTitle>
+          <Group gap="xs" mb="lg">
+            {(details.cv_skills || []).map((skill) => (
+              <SkillTag key={skill} skillName={skill} color="green" />
+            ))}
+          </Group>
+
+          <MantineTitle order={5} mb="xs">פערים מול השוק:</MantineTitle>
+          <Group gap="xs">
+            {(details.market_gaps || []).map((skill) => (
+              <SkillTag key={skill} skillName={skill} color="orange" />
+            ))}
+          </Group>
+        </Paper>
+
+        <Box>
+          <MantineTitle order={3} mb="md">🔥 משרות שיכולות להתאים</MantineTitle>
+          <SimpleGrid cols={{ base: 1, md: 2 }} spacing="lg">
+            {jobs.map((job, index) => (
+              <JobCard key={index} job={job} />
+            ))}
+          </SimpleGrid>
+        </Box>
+      </Stack>
     </Box>
   );
 }

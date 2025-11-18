@@ -14,25 +14,28 @@ export default function ExperiencePieChart({ data }) {
   if (!data || data.length === 0) return null;
 
   return (
-    <Paper shadow="sm" p="lg" withBorder radius="md" style={{ minWidth: 0 }}>
+    <Paper shadow="sm" p="md" withBorder radius="md" style={{ minWidth: 0 }}>
       <Title order={4} mb="md">🍰 התפלגות ניסיון נדרש</Title>
-      <Box style={{ width: '100%', height: 360 }}>
+      <Box style={{ width: '100%', height: 300 }}>
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
-            <Tooltip formatter={(v, n, e) => [`${v} משרות`, e?.name || n]} />
-            <Legend verticalAlign="bottom" height={36} iconSize={14} />
+            <Tooltip 
+              formatter={(v, n, e) => [`${v} משרות`, e?.payload?.name]}
+              contentStyle={{ direction: 'rtl', textAlign: 'right', borderRadius: '8px' }}
+            />
+            <Legend verticalAlign="bottom" height={36} iconSize={12} wrapperStyle={{ fontSize: '12px' }} />
             <Pie
               data={data}
               dataKey="count"
               nameKey="name"
               cx="50%"
               cy="50%"
-              outerRadius={130}
+              outerRadius="70%"
               labelLine={false}
               label={renderPercentLabel}
             >
               {data.map((entry, i) => (
-                <Cell key={i} fill={entry.color} stroke="black" strokeWidth={0.8} />
+                <Cell key={i} fill={entry.color} stroke="white" strokeWidth={2} />
               ))}
             </Pie>
           </PieChart>

@@ -20,7 +20,7 @@ export const renderPercentLabel = ({
       fill="white"
       textAnchor="middle"
       dominantBaseline="central"
-      style={{ fontSize: '0.9rem', fontWeight: 'bold' }}
+      style={{ fontSize: '11px', fontWeight: 'bold', pointerEvents: 'none' }}
     >
       {`${(percent * 100).toFixed(0)}%`}
     </text>

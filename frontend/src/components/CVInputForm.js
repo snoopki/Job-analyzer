@@ -11,16 +11,16 @@ function CVInputForm({ isLoading, onSubmit }) {
   };
 
   return (
-    <Paper shadow="sm" p="xl" withBorder>
-      <Title order={2} ta="center" mb="lg">
+    <Paper shadow="sm" p={{ base: 'md', sm: 'xl' }} withBorder>
+      <Title order={2} ta="center" mb="lg" size="h3">
         מנתח קורות חיים AI
       </Title>
       <Textarea
         label="הדבק את קורות החיים שלך"
-        placeholder="כאן המקום להדביק את הטקסט המלא של קורות החיים שלך..."
+        placeholder="כאן המקום להדביק את הטקסט המלא..."
         autosize
-        minRows={10}
-        maxRows={20}
+        minRows={5}
+        maxRows={15}
         size="md"
         value={cvText}
         onChange={(event) => setCvText(event.currentTarget.value)}
@@ -30,7 +30,8 @@ function CVInputForm({ isLoading, onSubmit }) {
         mt="xl"
         size="lg"
         onClick={handleSubmit}
-        disabled={isLoading || !cvText.trim()}
+        loading={isLoading}
+        disabled={!cvText.trim()}
       >
         {isLoading ? 'מנתח...' : 'נתח את קורות החיים שלי'}
       </Button>
