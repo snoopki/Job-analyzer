@@ -26,7 +26,7 @@ export default function BarSkillsChart({ data }) {
           <BarChart 
             data={data} 
             layout={isMobile ? "vertical" : "horizontal"}
-            margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+            margin={{ top: 20, right: 30, left: isMobile ? 0 : 20, bottom: 20 }}
           >
             <CartesianGrid strokeDasharray="3 3" vertical={!isMobile} horizontal={isMobile} />
             
@@ -34,11 +34,9 @@ export default function BarSkillsChart({ data }) {
               type={isMobile ? "number" : "category"}
               dataKey={isMobile ? undefined : "name"}
               domain={[0, 100]}
+              ticks={isMobile ? [0, 25, 50, 75, 100] : undefined}
               tickFormatter={!isMobile ? undefined : (value) => `${value}%`}
-              tick={{ fontSize: 11, fill: '#666', dy: isMobile ? 0 : 8 }}
-              angle={!isMobile ? 0 : 0}
-              textAnchor={!isMobile ? "middle" : "middle"}
-              height={!isMobile ? 60 : 30}
+              tick={{ fontSize: 11, fill: '#666' }}
               interval={0}
             />
 
@@ -46,9 +44,9 @@ export default function BarSkillsChart({ data }) {
               type={isMobile ? "category" : "number"}
               dataKey={isMobile ? "name" : undefined}
               domain={[0, 100]}
-              width={isMobile ? 120 : 40} 
-              tickFormatter={isMobile ? (val) => val.length > 15 ? val.slice(0, 15) + '..' : val : (val) => `${val}%`}
-              tick={{ fontSize: 11, fill: '#666', dx: isMobile ? -50 : -25 }} 
+              width={isMobile ? 10 : 40} 
+              tickFormatter={isMobile ? (val) => val.length > 18 ? val.slice(0, 18) + '..' : val : (val) => `${val}%`}
+              tick={{ fontSize: 11, fill: '#333', textAnchor: 'end' }} 
               interval={0}
             />
 
@@ -65,11 +63,11 @@ export default function BarSkillsChart({ data }) {
               fill="#2563EB" 
               name="אחוז מהמשרות" 
               radius={isMobile ? [0, 4, 4, 0] : [4, 4, 0, 0]} 
-              barSize={isMobile ? 20 : 40}
+              barSize={isMobile ? 18 : 40}
             />
           </BarChart>
         </ResponsiveContainer>
       </Box>
     </Paper>
   );
-}
+} 
