@@ -33,7 +33,7 @@ function CVInputForm({ isLoading, onSubmit }) {
         loading={isLoading}
         disabled={!cvText.trim()}
       >
-        {isLoading ? 'מנתח...' : 'נתח את קורות החיים שלי'}
+        {isLoading ? 'מנתח...' : 'נתח את קורות החיים'}
       </Button>
     </Paper>
   );
