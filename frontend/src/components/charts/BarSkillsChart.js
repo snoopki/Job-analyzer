@@ -24,14 +24,14 @@ export default function BarSkillsChart({ data }) {
       <Box
         style={{
           width: '100%',
-          height: isMobile ? Math.max(500, data.length * 60) : 420,
+          height: isMobile ? Math.max(500, data.length * 50) : 420,
           minWidth: 0
         }}
       >
         <ResponsiveContainer
           width="100%"
           height="100%"
-          minWidth={0}  // חשוב במובייל כדי לא לדחוס
+          minWidth={0}
         >
           <BarChart
             data={data}
@@ -49,7 +49,6 @@ export default function BarSkillsChart({ data }) {
               horizontal={isMobile}
             />
 
-            {/* X AXIS — במובייל זה אחוזים ולכן צריך מלא רוחב */}
             <XAxis
               type={isMobile ? "number" : "category"}
               dataKey={isMobile ? undefined : "name"}
@@ -66,7 +65,6 @@ export default function BarSkillsChart({ data }) {
               tickLine={false}
             />
 
-            {/* Y AXIS — כאן הבעיה הייתה. הקטנו רוחב כדי לאכול פחות מהרוחב הכולל */}
             <YAxis
               type={isMobile ? "category" : "number"}
               dataKey={isMobile ? "name" : undefined}

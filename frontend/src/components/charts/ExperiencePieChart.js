@@ -26,7 +26,7 @@ export default function ExperiencePieChart({ data }) {
               top: 10,
               right: 10,
               left: 10,
-              bottom: isMobile ? 30 : 10,
+              bottom: isMobile ? 50 : 10,
             }}
           >
             <Tooltip
@@ -51,7 +51,7 @@ export default function ExperiencePieChart({ data }) {
               nameKey="name"
               cx="50%"
               cy="50%"
-              outerRadius={isMobile ? '55%' : '65%'}
+              outerRadius={isMobile ? '80%' : '65%'}
               labelLine={false}
               label={renderPercentLabel}
             >
@@ -60,7 +60,7 @@ export default function ExperiencePieChart({ data }) {
                   key={i}
                   fill={entry.color}
                   stroke="white"
-                  strokeWidth={2}
+                  strokeWidth={1}
                 />
               ))}
             </Pie>
