@@ -13,29 +13,55 @@ import { renderPercentLabel } from './ChartUtils';
 export default function ExperiencePieChart({ data }) {
   if (!data || data.length === 0) return null;
 
+  const isMobile = window.innerWidth < 768;
+
   return (
     <Paper shadow="sm" p="md" withBorder radius="md" style={{ minWidth: 0 }}>
       <Title order={4} mb="md">🍰 התפלגות ניסיון נדרש</Title>
-      <Box style={{ width: '100%', height: 300 }}>
+
+      <Box style={{ width: '100%', height: isMobile ? 340 : 300 }}>
         <ResponsiveContainer width="100%" height="100%">
-          <PieChart margin={{ top: 10, right: 10, left: 10, bottom: 10 }}>
-            <Tooltip 
+          <PieChart
+            margin={{
+              top: 10,
+              right: 10,
+              left: 10,
+              bottom: isMobile ? 30 : 10,
+            }}
+          >
+            <Tooltip
               formatter={(v, n, e) => [`${v} משרות`, e?.payload?.name]}
-              contentStyle={{ direction: 'rtl', textAlign: 'right', borderRadius: '8px' }}
+              contentStyle={{
+                direction: 'rtl',
+                textAlign: 'right',
+                borderRadius: '8px',
+              }}
             />
-            <Legend verticalAlign="bottom" height={50} iconSize={12} wrapperStyle={{ fontSize: '12px' }} />
+
+            <Legend
+              verticalAlign="bottom"
+              height={50}
+              iconSize={12}
+              wrapperStyle={{ fontSize: '12px' }}
+            />
+
             <Pie
               data={data}
               dataKey="count"
               nameKey="name"
               cx="50%"
               cy="50%"
-              outerRadius="65%%" 
+              outerRadius={isMobile ? '55%' : '65%'}
               labelLine={false}
               label={renderPercentLabel}
             >
               {data.map((entry, i) => (
-                <Cell key={i} fill={entry.color} stroke="white" strokeWidth={2} />
+                <Cell
+                  key={i}
+                  fill={entry.color}
+                  stroke="white"
+                  strokeWidth={2}
+                />
               ))}
             </Pie>
           </PieChart>
