@@ -38,7 +38,7 @@ app.include_router(analysis_router, prefix="/api", tags=["Analysis"])
 
 def start_scheduler():
     scheduler = BackgroundScheduler()
-    scheduler.add_job(run_full_update, "interval", hours=1)
+    scheduler.add_job(run_full_update, "interval", hours=24)
     scheduler.start()
     logger.info("Scheduler started.")
 
